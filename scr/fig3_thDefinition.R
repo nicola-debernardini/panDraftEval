@@ -40,7 +40,7 @@ for (mod in names(iso.binary_table.list)) {
         select(b_i, rxn)
     
     # Load data for panModel
-    rxnXmod_dir_path <- "/home/bioinfo/users/niber/prj_panModel/db/microbiomics_ocean/pan.draft4minThValidation/rxnXmod"
+    rxnXmod_dir_path <- "/home/bioinfo/users/niber/prj_panModel/db/microbiomics_ocean/pan.draft4minThValidation/rxnXmod/fill"
     # rxnXmod_dir_path <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft4minThValidation/rxnXmod"
     sp_rxnXmod_path <- file.path(rxnXmod_dir_path, mod, "rxnXmod.tsv")
     sp_rxnXmod <- read.table(sp_rxnXmod_path, sep="\t", header = TRUE)

@@ -7,13 +7,13 @@ library(RColorBrewer)
 
 
 # Little helpers
-source("/home/bioinfo/users/niber/prj_panModel/scr/function_collection.R")
+source("./scr/function_collection.R")
 
 # Arguments:
-mag.binary.rxn.table      <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft_18Oct/gapfill/MAG/allMAG_rxnXmod.txt"# "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft/allMAG_rxnXmod.txt"
-iso.binary.rxn.table      <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft_18Oct/gapfill/ISO/allISO_rxnXmod.txt"# "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft/allISO_rxnXmod.txt"
+mag.binary.rxn.table      <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft_18Oct/gapfill/MAG/allMAG_rxnXmod.txt" # "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft/allMAG_rxnXmod.txt"
+iso.binary.rxn.table      <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft_18Oct/gapfill/ISO/allISO_rxnXmod.txt" # "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft/allISO_rxnXmod.txt"
 completeness.level.table  <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/metadata/genomes-all_metadata.csv"
-output.dir                <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft_18Oct/fig"
+# output.dir                <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/pan.draft_18Oct/fig"
 
 # Parameters:
 dist_type <- "binary"
@@ -108,6 +108,7 @@ sd(plot_df[plot_df$Completeness<91 & plot_df$Completeness>89, "value"])
 mean(plot_df[plot_df$Completeness>=99, "value"]) 
 sd(plot_df[plot_df$Completeness>=99, "value"]) 
 
+# -------------
 ### EVALUATE MAGs with few or no Ref and high number of MAGs
 metadata_REF_taxon <- metadata %>%
     filter(Species_name==Species_rep) %>%
@@ -182,7 +183,10 @@ ggsave(file.path(output.dir, "BestCompletenessMAG_x_Sp_noIsolates.pdf"), p, widt
 ### PLOT: Relationship between completeness and accuracy or other metrics
 what <- which.stat # which.stat dist_type "Tsgb"
 single_metric_plot_df <- plot_df[plot_df$dist_tp==what,]
-head(single_metric_plot_df)
+common_values <- intersect(single_metric_plot_df$ref_mod_id, single_metric_plot_df$mod_id)
+print(common_values)
+
+single_metric_plot_df[single_metric_plot_df$mod_id==single_metric_plot_df$ref_mod_id]
 
 phylum_in_plot_p <- unique(plot_dt$phylum_color_noStat)
 palette <- unique(set1_palette[match(single_metric_plot_df$phylum, phylum_in_plot_p)])
@@ -376,6 +380,44 @@ print(p_ocean)
 single_metric_plot_df <- plot_df[plot_df$dist_tp==what,]
 head(single_metric_plot_df)
 dim(single_metric_plot_df)
+
+# calculate number of species and MAG per phylum
+result <- single_metric_plot_df %>%
+  group_by(ref_mod_id) %>%
+  summarise(count_mod_id = n_distinct(mod_id))
+result_merged_df <- merge(result, oceans_metadata, by.x="ref_mod_id", by.y="Species_name")
+result_merged_df <- parse_GTDBtaxonomy(result_merged_df, "GTDB.Taxonomy") # GTDB.Taxonomy Lineage
+result_merged_df <- refine_GTDBtaxonomy(result_merged_df)
+
+dim(result_merged_df)
+result_mag <- result_merged_df %>%
+  group_by(phylum) %>%
+  summarise(count_mod_id = sum(count_mod_id)) %>%
+  arrange(count_mod_id)
+result_sp <- result_merged_df %>%
+  group_by(phylum) %>%
+  summarise(count_mod_id = n_distinct(ref_mod_id)) %>%
+  arrange(count_mod_id)
+# which Species has enough MAGs in the ocean in order to calculate the panDraft? 
+single_metric_plot_df %>%
+  group_by(ref_mod_id) %>%
+  summarize(count_mod_id = n_distinct(mod_id),
+  Comp50_60 = sum(Completeness>=50 & Completeness<60),
+  Comp60_70 = sum(Completeness>=60 & Completeness<70),
+  Comp70_80 = sum(Completeness>=70 & Completeness<80),
+  Comp80_90 = sum(Completeness>=80 & Completeness<90),
+  Comp90_100 = sum(Completeness>=90 & Completeness<100))
+# OUTPUT --none-- 
+# ref_mod_id     count_mod_id Comp50_60 Comp60_70 Comp70_80 Comp80_90 Comp90_100
+# MALA_SAMN0542…           64         7         5         7        19         26
+# MARD_SAMEA470…           40         7         9        14        10          0
+# MARD_SAMN0449…           52         9         4         9        18         12
+# MARD_SAMN0521…           37         4         5        11         8          9
+# MARD_SAMN0532…           50         6         7         6        13         18
+# MARD_SAMN0876…           33         9         5         9         5          4
+# TARA_SAMEA262…           32         4         7         4         6         11
+# TARA_SAMEA262…          115        14        20        17        44         19
+# TARA_SAMEA439…           31         5         5         9         3          5
 
 phylum_in_plot_p <- unique(plot_dt$phylum_color_noStat)
 palette <- unique(set1_palette[match(single_metric_plot_df$phylum, phylum_in_plot_p)])
