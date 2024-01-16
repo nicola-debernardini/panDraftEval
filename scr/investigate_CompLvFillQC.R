@@ -55,7 +55,7 @@ for (list in singleGeno_pathList) {
   dirty_spID <- tail(strsplit(list, "_")[[1]], n = 1)
   spID <- strsplit(dirty_spID, "\\.")[[1]][1]
   
-  singleGeno_mods <- load_files_from_paths_for_RDS(list, ".RDS") # open all the models of the isolats of a single species
+  singleGeno_mods <- load_files_from_paths_for_RDS(list, ".RDS") # open all the models of a single species
   res <- build_rxn2mod_dt(singleGeno_mods) # Build the data.table of 1|0 reaction in a list of models
   rxn2mod_dt <- res[[1]]
   mag.binary_table.list[[spID]] <- rxn2mod_dt
