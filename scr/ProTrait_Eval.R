@@ -117,7 +117,7 @@ uhgg_id_2_protrait_id <- UHGG2proTraitId[UHGG2proTraitId$ProTrait_ID %in% carbon
 rownames(uhgg_id_2_protrait_id) <- uhgg_id_2_protrait_id$Species_name
 
 # GENOME OF MAG
-singleGeno_pathList <- singleGeno_pathList[c(6)]
+# singleGeno_pathList <- singleGeno_pathList[c(6,30)]
 all_pred_res <- data.frame()
 for (list in singleGeno_pathList) {
   dirty_spID <- tail(strsplit(list, "_")[[1]], n = 1)
@@ -139,6 +139,8 @@ for (list in singleGeno_pathList) {
     singleGeno_mods <- load_files_from_paths_for_RDS(list, ".RDS") # open all the models of a single species
     sp_carbon_source_usage_res <- data.frame()
     counter <- 0
+    results_matrix <- matrix(NA, nrow = length(singleGeno_mods), ncol = 4,
+                              dimnames = list(NULL, c("TP", "FP", "TN", "FN")))
   }else{
     next # procede to the next reference (set of genomes)  
   }
@@ -169,17 +171,19 @@ for (list in singleGeno_pathList) {
     # store results single genome 
     names(media2test.res) <- c("compounds", geno)
     t_media2test.res <- as.data.frame(t(media2test.res[,-1]))
-    names(t_media2test.res) <- media2test.res$compounds
-    confusion_matrix_res_df <- compute_confusion_matrix(t_media2test.res, gold_std_carbon_usage)
-    
-    t_media2test.res$proTrait_Id <- proTraitID
-    t_media2test.res$ref_Id <- spID
-    t_media2test.res$mag_Id <- geno
+    names(t_media2test.res) <- media2test.res$compounds    
     sp_carbon_source_usage_res <- rbind(sp_carbon_source_usage_res, t_media2test.res)  
+    # compute confusion matrix
+    results_matrix[counter, ] <- compute_confusion_matrix(t_media2test.res, gold_std_carbon_usage)
   }
-
+  
+  confusion_matrix_res_df <- as.data.frame(results_matrix)
+  confusion_matrix_res_df$mag_Id <- names(singleGeno_mods)
+  sp_carbon_source_usage_res$mag_Id <- rownames(sp_carbon_source_usage_res)
+  sp_carbon_source_usage_res$ref_Id <- spID
+  sp_carbon_source_usage_res$proTrait_Id <- proTraitID
+  
   merge_df <- merge(sp_carbon_source_usage_res, confusion_matrix_res_df, by="mag_Id")
-    mod <- 
   t.merge_df <- as.data.frame(t(merge_df))
   t.merge_df$Rownames <- rownames(t.merge_df)
   if (all(dim(all_pred_res) == 0)) { # if the final dataset is still empty append the restults
@@ -197,22 +201,25 @@ t.all_pred_res <- as.data.frame(t(all_pred_res))
 head(t.all_pred_res)
 dim(t.all_pred_res)
 
+# SAVE
+fwrite(t.all_pred_res, file = file.path(output.dir, "MAG_phenotype_prediction.tsv"), sep = "\t", quote = FALSE)
+# t.all_pred_res <- read.table(file.path(output.dir, "MAG_phenotype_prediction.tsv"), header = TRUE, sep = "\t", quote = "")
 
 
 ### PAN-DRAFT
-all_pred_res <- data.frame()
 panMAG.CompLV.gapfill.mods <- load_files_from_paths_for_RDS(panMAG.CompLV.gapfill.model.path, ".RDS") 
+
+all_panDraft_pred_res <- data.frame()
 for (mod_idx in names(panMAG.CompLV.gapfill.mods)) {
-  mod_idx <- "MGYG000002492_iter_7_Compth_80_panModel"
   spID <- strsplit(mod_idx, "_")[[1]][1]
   iter_num <- strsplit(mod_idx, "_")[[1]][3]
   compLv <- strsplit(mod_idx, "_")[[1]][5]
   proTraitID <- uhgg_id_2_protrait_id[spID, "ProTrait_ID"]
 
-  # load only the model of genome of interest
+  # load only the model for genome of interest
   if (spID %in% uhgg_id_2_protrait_id$Species_name) {
     cat("\n", "Processing:", mod_idx)
-    mod <- panMAG.CompLV.gapfill.mods[mod_idx]
+    mod <- panMAG.CompLV.gapfill.mods[mod_idx][[1]]
   }else{
     next # procede to the next reference (set of genomes)  
   }
@@ -259,25 +266,119 @@ for (mod_idx in names(panMAG.CompLV.gapfill.mods)) {
    
   t.merge_df <- as.data.frame(t(merge_df))
   t.merge_df$Rownames <- rownames(t.merge_df)
-  if (all(dim(all_pred_res) == 0)) { # if the final dataset is still empty append the restults
-    all_pred_res <- rbind(all_pred_res, t.merge_df)
+  if (all(dim(all_panDraft_pred_res) == 0)) { # if the final dataset is still empty append the restults
+    all_panDraft_pred_res <- rbind(all_panDraft_pred_res, t.merge_df)
   }else{ # otherwise merge them
-    all_pred_res <- merge(all_pred_res, t.merge_df, by = "Rownames", all = TRUE)
+    all_panDraft_pred_res <- merge(all_panDraft_pred_res, t.merge_df, by = "Rownames", all = TRUE)
   }
 }
 
 # Transpose final results 
-rownames(all_pred_res) <- all_pred_res$Rownames
-all_pred_res$Rownames <- NULL
-colnames(all_pred_res) <- all_pred_res["mag_Id",]
-t.all_pred_res <- as.data.frame(t(all_pred_res))
-head(t.all_pred_res)
-dim(t.all_pred_res)
+rownames(all_panDraft_pred_res) <- all_panDraft_pred_res$Rownames
+all_panDraft_pred_res$Rownames <- NULL
+colnames(all_panDraft_pred_res) <- all_panDraft_pred_res["mag_Id",]
+t.all_panDraft_pred_res <- as.data.frame(t(all_panDraft_pred_res))
+head(t.all_panDraft_pred_res)
+dim(t.all_panDraft_pred_res)
+
+# SAVE
+fwrite(t.all_panDraft_pred_res, file = file.path(output.dir, "panDraft_phenotype_prediction.tsv"), sep = "\t", quote = FALSE)
+# t.all_panDraft_pred_res <- read.table(file.path(output.dir, "panDraft_phenotype_prediction.tsv"), header = TRUE, sep = "\t", quote = "")
 
 
 
+# COMPARE RESULTS
+library(tidyr)
+library(dplyr)
+str(t.all_panDraft_pred_res)
+str(t.all_pred_res)
+
+numeric_columns <- c("TP", "FP", "TN", "FN", "CompLv_th")
+t.all_pred_res[numeric_columns] <- lapply(t.all_pred_res[numeric_columns], as.numeric)
+t.all_panDraft_pred_res[numeric_columns] <- lapply(t.all_panDraft_pred_res[numeric_columns], as.numeric)
+
+numeric_columns <- c("TP", "FP", "TN", "FN")
+plot_df <- data.frame()
+for (uhgg_id in unique(t.all_panDraft_pred_res$ref_Id)) {
+  cat(paste(uhgg_id, "\n"))
+  CompLv_th <- 80
+  if (dim(t.all_panDraft_pred_res[t.all_panDraft_pred_res$ref_Id == uhgg_id & t.all_panDraft_pred_res$compLv == CompLv_th,])[1] > 0) {
+    panPheno_betweenTh <- t.all_panDraft_pred_res[t.all_panDraft_pred_res$ref_Id == uhgg_id & t.all_panDraft_pred_res$compLv == CompLv_th, c("TP", "FP", "TN", "FN")]
+
+    MAG_id_betweenTh <-  metadata[metadata$Species_rep == uhgg_id & metadata$Completeness < (CompLv_th+10), "Species_name"]
+    length(MAG_id_betweenTh)
+    magPheno_betweenTh <- t.all_pred_res[t.all_pred_res$mag_Id %in% MAG_id_betweenTh, c("TP", "FP", "TN", "FN")]
+    dim(magPheno_betweenTh)
+    # something is missing, WHY ???????
+
+    colnames(panPheno_betweenTh)
+
+    mean_panPheno_betweenTh <- colMeans(panPheno_betweenTh[numeric_columns])
+    mean_magPheno_betweenTh <- colMeans(magPheno_betweenTh[numeric_columns])
+    mean_panPheno_betweenTh["type"] = "pan"
+    mean_magPheno_betweenTh["type"] = "mag"
+
+    mean_Pheno_sp <- as.data.frame(rbind(mean_panPheno_betweenTh, mean_magPheno_betweenTh))
+    mean_Pheno_sp[numeric_columns] <- lapply(mean_Pheno_sp[numeric_columns], as.numeric)
+    plot_df <- rbind(plot_df, mean_Pheno_sp)
+  } else {
+    cat(paste(uhgg_id, "do not have a pan-model in the completeness th", CompLv_th, CompLv_th+10, "\n"))
+    next
+  }
+}
+
+num_sp <- dim(plot_df)[1]/2 
+cat(paste("The number of species consider for this statistics is", num_sp, "\n"))
+
+plot_df <- gather(plot_df, key = "statistic", value = "value", -type)
+summarized_df <- plot_df %>%
+  group_by(type, statistic) %>%
+  summarize(sum_value = sum(value, na.rm = TRUE))
 
 
+# Plot
+plot <- ggplot(summarized_df, aes(x = statistic, y = sum_value, fill = type)) +
+  geom_col(position = "dodge") +  # Use geom_col() instead of geom_bar()
+  labs(x = "Type",
+      y = "Count") +
+  scale_fill_manual(values = c("red", "blue")) +
+  theme_minimal()
+print(plot)
+
+ggsave(file.path(output.dir, paste0("prova_bar_", CompLv_th, "_totalSum.pdf")), 
+  plot,  units = "cm", width = 16, height = 10, dpi = 300)
+
+
+
+uhgg_id <- "MGYG000000113"
+CompLv_th <- 50
+panPheno_betweenTh <- t.all_panDraft_pred_res[t.all_panDraft_pred_res$ref_Id == uhgg_id & t.all_panDraft_pred_res$compLv == as.character(CompLv_th), c("TP", "FP", "TN", "FN")]
+
+MAG_id_betweenTh <-  metadata[metadata$Species_rep == uhgg_id & metadata$Completeness < (CompLv_th+10), "Species_name"]
+length(MAG_id_betweenTh)
+magPheno_betweenTh <- t.all_pred_res[t.all_pred_res$mag_Id %in% MAG_id_betweenTh, c("TP", "FP", "TN", "FN")]
+dim(magPheno_betweenTh)
+# something is missing, WHY ???????
+
+magPheno_betweenTh["type"] = "mag"
+panPheno_betweenTh["type"] = "pan"
+numeric_columns <- c("TP", "FP", "TN", "FN")
+plot_df <- rbind(panPheno_betweenTh, magPheno_betweenTh)
+plot_df[numeric_columns] <- lapply(plot_df[numeric_columns], as.numeric)
+plot_df <- gather(plot_df, key = "statistic", value = "value", -type)
+dim(plot_df)
+
+# Plot
+plot <- ggplot(plot_df, aes(x = statistic, y = value, fill = type)) +
+  geom_boxplot() +
+  labs(x = "Type",
+       y = "Count") +
+  scale_fill_manual(values = c("red", "blue")) +
+  theme_minimal()
+print(plot)
+
+ggsave(file.path(output.dir, paste0("prova.pdf")), 
+  plot,  units = "cm", width = 16, height = 10, dpi = 300)
 
 
 
