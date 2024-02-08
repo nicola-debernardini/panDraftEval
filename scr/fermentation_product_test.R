@@ -80,9 +80,9 @@ for (list in singleGeno_pathList) {
 
   for (geno in names(singleGeno_mods)) {
     # limit the analysis to 100 GEMs per species
-    if (counter >= limit_mags_to) {
-      next
-    }
+    # if (counter >= limit_mags_to) {
+    #   next
+    # }
 
     # geno = "MGYG000284276"
     cat("\n", geno, "\n")
@@ -115,7 +115,7 @@ gs.fermprod[, recon.method := "gapseq"]
 
 # We normalised the outflow of the individual fermentation products by the predicted growth rate of the respective organism
 # SAVE
-fwrite(gs.fermprod, file = file.path(output.dir, "mag_fermProd_31Gen.tsv"), sep = "\t", quote = FALSE)
+fwrite(gs.fermprod, file = file.path(output.dir, "mag_fermProd_6Feb.tsv"), sep = "\t", quote = FALSE)
 # gs.fermprod <- read.table(file.path(output.dir, "mag_fermProd_31Gen.tsv"), header = TRUE, sep = "\t", quote = "")
 head(gs.fermprod)
 
