@@ -1,10 +1,6 @@
-### Prob. Dist.
-# FUNCTION - compute_contigency_table
-#   input: 
-#      - 2 lists of reference and predicted rxn
-#      - the value of fb.score.par to Fb score
-#   output:
-#      - list with contigency table and statitics
+###################################################### @
+# Functions collection
+
 compute_contigency_table <- function(ref_rxn, pred_rxn) {
   all_reactions <- unique(c(ref_rxn, pred_rxn)) # Create a vector of all unique reactions
   common_reactions <- intersect(ref_rxn, pred_rxn)
@@ -34,17 +30,6 @@ compute_contigency_table <- function(ref_rxn, pred_rxn) {
 }
 
 
-# FUNCTION - compute_stat4diffMAGsetSize
-#   input: 
-#      - data:
-#      - MAG_cols: 
-#      - th: 
-#      - reference_reactions:
-#      - n.iter:
-#      - n.MAG.cols:
-#      - which.stat:   
-#   output:
-#      - prob_dist_df:
 compute_stat4diffMAGsetSize <- function(data, MAG_cols, th, reference_reactions, n.iter, n.MAG.cols, which.stat) {
   prob_dist_df <- data.frame(step = numeric(0), stat = numeric(0), group = numeric(0)) # df to save prob
   # compute statistics for n iteration
@@ -69,7 +54,6 @@ compute_stat4diffMAGsetSize <- function(data, MAG_cols, th, reference_reactions,
   return(prob_dist_df)
 }
 
-# FUNCTION - compute_stat4diffMAGsetSize_parallel
 compute_stat4diffMAGsetSize_parallel <- function(data, MAG_cols, th, reference_reactions, n.iter, n.MAG.cols, which.stat) {
   cl <- makeCluster(num.cores) # Initialize a parallel backend with n cores
   registerDoParallel(cl)
@@ -130,7 +114,7 @@ distance_cal <- function(mag_data, freq_ref_rxn, dist_type){
     return(dist_val)
 }
 
-### load files (.RDS) from paths  
+### load files (.RDS) from paths
 # specify suffix to save the prefix as id in a list
 load_files_from_paths <- function(list_fn, suf) {
   cat("\tloading file from:", list_fn, "\n")
@@ -145,7 +129,7 @@ load_files_from_paths <- function(list_fn, suf) {
   return(file_list)
 }
 
-### load files (.RDS) from paths  
+### load files (.RDS) from paths
 # specify suffix to save the prefix as id in a list
 load_files_from_paths_for_RDS <- function(list_fn, suf) {
   cat("\tloading file from:", list_fn, "\n")
@@ -161,7 +145,7 @@ load_files_from_paths_for_RDS <- function(list_fn, suf) {
   return(file_list)
 }
 
-### load files (.tbl) from paths  
+### load files (.tbl) from paths
 load_files_from_paths_for_tbl <- function(list_fn, suf) {
   cat("\tloading file from:", list_fn, "\n")
   file_paths <- readLines(list_fn)
