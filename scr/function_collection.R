@@ -139,7 +139,7 @@ load_files_from_paths <- function(list_fn, suf) {
   # Iterate over the file paths and read the corresponding files
   for (path in file_paths) {
     file_data <- read.table(path, sep="\t", header = TRUE)
-    filename <- strsplit(path, "/")[[1]][12]
+    filename <- head(tail(strsplit(path, "/")[[1]], 2), 1)
     file_list[[filename]] <- file_data
   }
   return(file_list)

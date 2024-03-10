@@ -1,0 +1,9 @@
+./dat/omd/rxnXmod/mag/MALA_SAMN05422122_METAG_CKBPOFGO/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/MARD_SAMEA4707913_REFG_MMP4707913/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/MARD_SAMN04490369_REFG_MMP04490369/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/MARD_SAMN05216256_REFG_MMP05216256/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/MARD_SAMN05327868_REFG_MMP05327868/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/MARD_SAMN08769784_REFG_MMP08769784/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/TARA_SAMEA2621487_METAG_JEJEPAEM/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/TARA_SAMEA2622545_METAG_KEGJKDAO/rxnXmod.tsv
+./dat/omd/rxnXmod/mag/TARA_SAMEA4396515_METAG_IJHFFIED/rxnXmod.tsv
