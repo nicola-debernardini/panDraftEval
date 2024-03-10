@@ -1,15 +1,17 @@
-# HEATMAP
+######################################################
+# Script to reproduce the fermentation test (figure 5):
+
+# Load R-packages
 library(dplyr)
 library(data.table)
-library(ggplot2) # Graphical
+library(ggplot2)
 library(ggpubr)
 library(viridis)
 library(tidyr)
 
 # Little helpers
-source("/home/bioinfo/projects/panGenome/panDraftEval/scr/function_collection.R")
+source("./scr/function_collection.R")
 
-# HELPER
 calculate_confusion_matrix <- function(true_values, predicted_values) {
   # Ensure both vectors are of the same length
   if (length(true_values) != length(predicted_values)) {
@@ -30,7 +32,6 @@ calculate_confusion_matrix <- function(true_values, predicted_values) {
   return(c(TP = TP, TN = TN, FP = FP, FN = FN))
 }
 
-# HELPER
 calculate_normalized_confusion_matrix <- function(true_values, predicted_values) {
 
   # Ensure both vectors are of the same length
@@ -49,7 +50,6 @@ calculate_normalized_confusion_matrix <- function(true_values, predicted_values)
   return(c(TP = TP, TN = realN-FP, FP = FP, FN = realP-TP))
 }
 
-# HELPER
 calculate_performance_array <- function(true_values, predicted_values) {
 
   # Ensure both vectors are of the same length
@@ -72,7 +72,7 @@ calculate_performance_array <- function(true_values, predicted_values) {
   return(res)
 }
 
-# INPUT
+# Arguments:
 output.dir                <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/fermProdTest/out_7Feb_2024"
 gs.fermprod_pan <- read.table(file.path(output.dir, "panDraft_fermProd_31Gen.tsv"), header = TRUE, sep = "\t", quote = "")
 gs.fermprod <- read.table(file.path(output.dir, "mag_fermProd_6Feb.tsv"), header = TRUE, sep = "\t", quote = "")

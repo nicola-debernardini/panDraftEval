@@ -1,4 +1,4 @@
-######################################################
+######################################################  @
 # Script to reproduce the analysis in figure 2:
 # 1. Completeness level of the "best MAG" within frequently detected SGBs
 # 2. GEMs quality quantification with respect to reference genome models
