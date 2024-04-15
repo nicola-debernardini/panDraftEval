@@ -1,4 +1,3 @@
-
 ############################################################################
 ### Improvement of pan.mod based on completeness subset compared to best MAG
 # Parameters

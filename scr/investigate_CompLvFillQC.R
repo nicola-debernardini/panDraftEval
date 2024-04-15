@@ -316,15 +316,19 @@ merged_filtered_df <- merged_df %>%
 cols <- RColorBrewer::brewer.pal(6,'OrRd')[c(1,6)] # OrRd PuBu
 heatmap_plot <- ggplot(merged_filtered_df, aes(x = species, y = factor(comp_lv), fill = diff_pan.modVsBest.mag)) +
   geom_tile() +
-  labs(x = "Reference Model ID", y = "Competeness level", 
-  fill = paste("F1 score")) + # "Difference in", what
+  labs(
+    x = "Reference genome taxonomy", 
+    y = "Competeness (%)", 
+    fill = paste("F1 score difference"), 
+    size = 8) + # "Difference in", what
   scale_fill_gradient(low=cols[1], high=cols[2], na.value = "gray") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 80, hjust = 1),
-  legend.title = element_text(size = 10)) # Rotate x-axis labels for readability
+  theme(axis.text.x = element_text(angle = 80, hjust = 1, size = 7),
+  legend.title = element_text(size = 8),
+  legend.text = element_text(size = 6)) # Rotate x-axis labels for readability
 print(heatmap_plot)
-ggsave(file.path(output.dir, paste0("only_heatmap.pdf")), 
-  heatmap_plot,  units = "cm", width = 16, height = 10, dpi = 300)
+# ggsave(file.path(output.dir, paste0("only_heatmap.pdf")), 
+  # heatmap_plot,  units = "cm", width = 16, height = 10, dpi = 300)
 
 # BOXPLOT
 noBest_mag_df <- all_dist_df %>% 
@@ -338,19 +342,20 @@ noBest_mag_df$comp_lv <- as.factor(noBest_mag_df$comp_lv)
 box_plot <- ggplot(noBest_mag_df, aes(x=comp_lv, y=value, fill=mod_category)) + 
   geom_boxplot() + #position_nudge(x = 1)
   labs(
-    x = "Completeness threshold",
-    y = "F1 score"
-    ) +
+    x = "Completeness (%)",
+    y = "F1 score",
+    size = 8) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 80, hjust = 1),
+  theme(axis.text.x = element_text(angle = 80, hjust = 1, size = 8),
   legend.text = element_text(size = 6),
   legend.title = element_text(size = 8)
   ) 
 print(box_plot)
 
-combined_plot <- ggarrange(box_plot + labs(title = "a."),
+combined_plot <- ggarrange(box_plot + labs(title = "a."), + theme(legend.position = "none"),
   heatmap_plot + labs(title = "b.") + theme(legend.position = "none"), 
   ncol = 2,  widths = c(1.2, 2)) # Combine the two plots
-print(combined_plot)
-ggsave(file.path(output.dir, paste0("boxPlot_all_MAG_CompLV_AND_", what, "_improvement_based_on_MAG_CompLV_gapfill_NOLEGEND.pdf")), 
-  combined_plot,  units = "cm", width = 16, height = 10, dpi = 300)
+# print(combined_plot)
+cat(file.path(output.dir, paste0("boxPlot_all_MAG_CompLV_AND_", what, "_improvement_based_on_MAG_CompLV_gapfill_NOLEGEND_v2.pdf")))
+ggsave(file.path(output.dir, paste0("boxPlot_all_MAG_CompLV_AND_", what, "_improvement_based_on_MAG_CompLV_gapfill_NOLEGEND_v2.pdf")), 
+  combined_plot,  units = "cm", width = 13, height = 10, dpi = 300)

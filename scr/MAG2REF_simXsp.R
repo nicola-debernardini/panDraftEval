@@ -126,6 +126,30 @@ plot_dt <- metadata %>%
 
 cat(paste0("The number of species with at least 30 MAG, no reference genome and a best-MAG completeness level < 90 is: ",sum(plot_dt$bestMAG_Comp < 90),"/",dim(plot_dt)[1], "\n"))
 
+# Read non-redundant genome sequence metadata
+
+
+# Calculate how many SGB have few or no Ref and a high number of MAGs
+metadata_REF_taxon <- metadata %>%
+    filter(Species_name==Species_rep) %>%
+    select("Species_name", "Lineage")
+metadata_REF_taxon <- parse_GTDBtaxonomy(metadata_REF_taxon, "Lineage") # parse the GTDB taxonomy
+metadata_REF_taxon <- refine_GTDBtaxonomy(metadata_REF_taxon) # refine the GTDB taxonomy names
+
+# process the metadata to calculate stat on MAG number and completeness level for each SGB
+plot_dt <- metadata %>%
+    group_by(Species_rep) %>%
+    mutate(n_Iso = sum(Genome_type=="Isolate"), 
+    n_MAG = sum(Genome_type=="MAG"), 
+    MAGComp_mean = mean(Completeness),
+    MAGComp_std = sd(Completeness),
+    bestMAG_Comp = max(Completeness)) %>%
+    filter(n_Iso < 1) %>%
+    filter(n_MAG >= 30) %>%
+    arrange(n_MAG) %>%
+    filter(Species_name==Species_rep) %>% # select only representative
+    ungroup()
+
 # -------------
 # prepare dataset for the first plot:
 plot_dt <- merge(plot_dt, metadata_REF_taxon, by="Species_name")
@@ -157,7 +181,10 @@ phylum_in_plot_uhgg <- unique(plot_dt_UHGG$phylum_color_noStat)
 # prepare dataset for the second plot:
 # relationship between completeness level of genome and quality of GEMs
 single_metric_plot_df <- plot_df_UHGG[plot_df_UHGG$dist_tp==which.stat,] # extract the values of the desired metric
-
+# single_metric_plot_df$phylum_color <- paste0(single_metric_plot_df$phylum_color, " (m=", single_metric_plot_df$count_MAGxphylum_count, "; s=", single_metric_plot_df$count_SpXphylum, ")")
+# plot_dt$phylum_color <- as.factor(plot_dt$phylum_color)
+levels(single_metric_plot_df$phylum)
+single_metric_plot_df
 
 #####################
 ### OMD dataset
@@ -292,6 +319,7 @@ phylum_in_plot_OMD <- unique(plot_dt_OMD$phylum_color_noStat)
 single_metric_plot_OMD <- plot_df_OMD[plot_df_OMD$dist_tp==which.stat,]
 dim(single_metric_plot_OMD)
 
+head(single_metric_plot_df)
 
 # -------------
 # PLOTs
@@ -304,17 +332,23 @@ new_order <- unique(plot_dt_UHGG$phylum_color_noStat)
 plot_dt_UHGG$phylum_color_noStat <- factor(plot_dt_UHGG$phylum_color_noStat, levels = new_order)
 levels(plot_dt_UHGG$phylum_color_noStat)
 
-p <- ggplot(plot_dt_UHGG, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_color_noStat)) + # phylum_color_noStat phylum_color # factor(n_Iso)
-  geom_point(alpha = 0.4, size = 2) +
-  scale_x_log10() +
-  labs(x = "Number of MAG", y = "Completeness (%)") +
-  labs(color = "Phylum - UHGG") + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-  legend.position =  c(.8, 0.4),
-  legend.text = element_text(size = 6)
-  ) +
-  scale_color_manual(values = set1_palette)
+p <- ggplot(plot_dt_UHGG, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_color)) + # phylum_color_noStat phylum_color # factor(n_Iso)
+    geom_point(alpha = 0.4, size = 2) +
+    scale_x_log10(limits = c(30, 6000)) +
+    labs(
+        x = "Number of MAGs",
+        y = "Maximum completeness (%)",
+        size = 8) +
+    labs(color = "UHGG") + 
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.position =  c(.8, 0.4),
+    legend.text = element_text(size = 6)
+    ) +
+    scale_color_manual(values = set1_palette) +
+    ylim(75, 100)
+p
 # ggsave(file.path(output.dir, "BestCompletenessMAG_x_Sp_noIsolates.pdf"), p, width = 6, height = 6, units = "in", dpi = 300)
 
 
@@ -322,19 +356,22 @@ p <- ggplot(plot_dt_UHGG, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_color_
 set1_palette <- unique(palette[match(single_metric_plot_df$phylum, phylum_in_plot)])
 new_order <- unique(single_metric_plot_df$phylum)
 single_metric_plot_df$phylum <- factor(single_metric_plot_df$phylum, levels=new_order)
-
 sum_plot <- ggplot(single_metric_plot_df, aes(x=Completeness, y=value, color=phylum)) + 
     geom_point(alpha = 0.3, show.legend = TRUE, size = 1) +
     geom_smooth(method = "auto", se = TRUE, show.legend = FALSE) +  # Add trend lines "lm"
     labs(
         x = "Completeness (%)",
-        y = "F1 score") + # which.stat
+        y = "F1 score",
+        size = 8) + # which.stat
         # title = "Fit a generalized additive model 'mgcv::gam' with formula = 'y ~ s(x, bs = 'cs')") +
+    labs(color = "UHGG") +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 8),
     legend.position =  c(.8, 0.3),
     legend.text = element_text(size = 6)) +
     scale_color_manual(values = set1_palette)
+sum_plot
 # ggsave(file.path(output.dir, paste0(which.stat,"_MAGsCLv.vs.GEMsQ.pdf")), sum_plot, width = 10, height = 8, units = "in", dpi = 300)
 
 
@@ -343,17 +380,23 @@ set1_palette <- unique(palette[match(plot_dt_OMD$phylum_color_noStat, phylum_in_
 new_order <- unique(plot_dt_OMD$phylum_color_noStat)
 plot_dt_OMD$phylum_color_noStat <- factor(plot_dt_OMD$phylum_color_noStat, levels = new_order)
 
-p_ocean <- ggplot(plot_dt_OMD, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_color_noStat)) + # factor(n_Iso)
-  geom_point(alpha = 0.4, size = 2) +
-  scale_x_log10() +
-  labs(x = "Number of MAG", y = "Completeness (%)") +
-  labs(color = "Phylum") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-  legend.position =  c(.8, 0.3),
-  legend.text = element_text(size = 6)
-  ) + 
-  scale_color_manual(values = set1_palette)
+p_ocean <- ggplot(plot_dt_OMD, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_color)) + # factor(n_Iso)
+    geom_point(alpha = 0.4, size = 2) +
+    scale_x_log10(limits = c(30, 400)) +
+    labs(
+        x = "Number of MAGs", 
+        y = "Maximum completeness (%)",
+        size = 8) +
+    labs(color = "OMD") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 8),
+    legend.position =  c(.8, 0.3),
+    legend.text = element_text(size = 6)
+    ) + 
+    scale_color_manual(values = set1_palette) +
+    ylim(60, 100)
+p_ocean
 # ggsave(file.path(output.dir, "BestCompletenessMAG_x_Sp_noIsolates.pdf"), p_ocean, width = 6, height = 6, units = "in", dpi = 300)
 
 
@@ -367,10 +410,13 @@ sum_plot_ocean <- ggplot(single_metric_plot_OMD, aes(x=Completeness, y=value, co
     geom_smooth(method = "auto", se = TRUE, show.legend = FALSE) +  # Add trend lines "lm"
     labs(
         x = "Completeness (%)",
-        y = "F1 score") + # which.stat
+        y = "F1 score",
+        size = 8) + # which.stat
         # title = "Fit a generalized additive model 'mgcv::gam' with formula = 'y ~ s(x, bs = 'cs')") +
+    labs(color = "OMD") +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+    axis.text.y = element_text(size = 8),
     legend.position =  c(.8, 0.3),
     legend.text = element_text(size = 6)) +
     scale_color_manual(values = set1_palette) 
@@ -382,7 +428,7 @@ sum_plot_ocean <- ggplot(single_metric_plot_OMD, aes(x=Completeness, y=value, co
 ### FIGURE 2 in paper
 output.dir <- "./dat/fig"
 # Combine the two plots
-combined_plot <- ggarrange( p + labs(title = "a."), sum_plot + labs(title = "b."),
-    p_ocean + labs(title = "c."), sum_plot_ocean + labs(title = "d."),
+combined_plot <- ggarrange( p + labs(title = "a."), p_ocean + labs(title = "b."),
+    sum_plot + labs(title = "c."), sum_plot_ocean + labs(title = "d."),
     ncol = 2, nrow = 2, widths = c(1, 1))
-# ggsave(file.path(output.dir, "fig2.pdf")), combined_plot,  units = "cm", width = 16, height = 16, dpi = 300)
+ggsave(file.path(output.dir, "fig2.pdf"), combined_plot,  units = "cm", width = 16, height = 16, dpi = 300)

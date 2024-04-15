@@ -1,3 +1,15 @@
+######################################################  @
+# Script to reproduce the analysis in figure 3:
+# 1. Selection of optimal MRF threshold for UHGG
+# 2. Selection of optimal MRF threshold for OMD
+
+# Pseudo-code:
+#  load rxnXmod table of reference
+#  load rxnXmod table of gapfilled pan-GEM
+#  for every GEM in the reference GEM list:
+#   for every pan-GEM generated for that specific species with different threasholds:
+#       calculate statistics and save them in a dataframe
+
 library(tidyr)
 library(dplyr)
 library(data.table)
@@ -5,19 +17,11 @@ library(ggplot2)
 library(RColorBrewer)
 
 # Little helpers
-source("/home/bioinfo/users/niber/prj_panModel/scr/function_collection.R")
+source("./scr/function_collection.R")
 
 # Parameters:
 dist_type <- "binary"
 which.stat <- "f1_score" # fB_score f1_score recall precision accuracy FDR
-
-### pseudo-code
-# load rxnXmod table of reference
-# load rxnXmod table of gapfilled pan-model
-# for every mod in the reference model list
-#   for every pan-mod generated for that specific species with a different threashold
-#       calculate statistics and save them in dataframe
-# plot
 
 # LOAD DATA since alreacy calculated
 output.dir <- "/home/bioinfo/users/niber/prj_panModel/db/Paper/fig"
@@ -140,7 +144,7 @@ set1_palette <- brewer.pal(2, "Set1")  # You can specify the number of colors yo
 
 line_plot <- ggplot(plot_prob_dist_df, aes(x = comp_lv, y = value, group = species, color = phylum)) +
   geom_line(alpha = 0.8) +
-  labs(x = "Perc. of pan-reactome", y = "F1 score") +
+  labs(x = "MRF threshold (%)", y = "F1 score") +
   theme_minimal()+ 
   scale_color_manual(values = set1_palette) + 
   guides(color = guide_legend(title = "Phylum")) 
@@ -159,10 +163,10 @@ max_index <- which.max(find_best_perf$avgPerformance)
 max_index <- find_best_perf$comp_lv[max_index]
 
 line_plot <- line_plot +
-  geom_line(data=find_best_perf, aes(x = comp_lv, y = avgPerformance), color = "#000000", linewidth = 1.5) + # red: "#ad1d00"
-  geom_vline(xintercept = max_index, linetype = "dashed", color = "black") 
-print(line_plot)
+  geom_line(data=find_best_perf, aes(x = comp_lv, y = avgPerformance), color = "#000000", linewidth = .2) + # red: "#ad1d00"
+  geom_vline(xintercept = max_index, linetype = "dashed", color = "black", linewidth = .1) 
 
+cat(file.path(output.dir, paste0(which.stat, "_maxLine_prob_dens_ocean.pdf")))
 ggsave(file.path(output.dir, paste0(which.stat, "_maxLine_prob_dens_ocean.pdf")), line_plot, width = 16, height = 8, units = "cm", dpi = 300)
 
 
@@ -329,21 +333,24 @@ plot_dt <- plot_dt %>%
     mutate(count_SpXphylum = length(unique(species))) %>%
     arrange(desc(count_SpXphylum)) 
 
-plot_dt$phylum_color <- paste0(plot_dt$phylum_color, " (s. ", plot_dt$count_SpXphylum, ")")
+plot_dt$phylum_color <- paste0(plot_dt$phylum_color, " (s=", plot_dt$count_SpXphylum, ")")
 plot_dt$phylum_color <- as.factor(plot_dt$phylum_color)
 levels(plot_dt$phylum_color) <- unique(plot_dt$phylum_color)
+# levels(plot_dt$phylum_color) <- c("Firmicutes_A (s=22)", "Firmicutes (s=9)", "Bacteroidota (s=4)", "Proteobacteria (s=2)", "Actinobacteriota (s=2)", "Verrucomicrobiota (s=1)") # UHGG
 
 set1_palette <- brewer.pal(9, "Set1")  # You can specify the number of colors you want
-# set1_palette <- set1_palette[8:9] # For ocean
+set1_palette <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#F781BF") # UHGG
+# set1_palette <- c("#984EA3" ,"#999999") # OMD
 
 line_plot <- ggplot(plot_dt, aes(x = comp_lv, y = value, group = species, color = phylum_color)) +
-  geom_line(alpha = 0.8, show.legend = FALSE) + 
-  labs(x = "Perc. of pan-reactome", y = "F1 score") +
+  geom_line(alpha = 0.8, show.legend = FALSE, linewidth = .3) + 
+  labs(x = "MRF threshold (%)", y = "F1 score") +
   theme_minimal()+ 
   scale_color_manual(values = set1_palette) + 
   guides(color = guide_legend(title = "Phylum")) + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),
-  legend.text = element_text(size = 8)
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8),
+  axis.text.y = element_text(size = 8),
+  legend.text = element_text(size = 6)
   ) 
 
 # determine the maximum value of the threshold as average of all the species
@@ -375,14 +382,15 @@ find_best_perf_Xsp <- find_best_perf_Xsp[find_best_perf_Xsp$whichBest,] %>%
 comp_lv_values <- unique(find_best_perf_Xsp$comp_lv)
 for (comp_lv_value in comp_lv_values) {
   line_plot <- line_plot +
-    geom_vline(xintercept = comp_lv_value, linetype = "dashed", color = "grey")
+    geom_vline(xintercept = comp_lv_value, linetype = "dashed", color = "grey", linewidth = .3)
 }
 line_plot <- line_plot +
-  geom_line(data=find_best_perf, aes(x = comp_lv, y = avgPerformance), color = "#000000", linewidth = 1.5) + # red: "#ad1d00"
-  geom_vline(xintercept = max_index, linetype = "dashed", color = "black") 
+  geom_line(data=find_best_perf, aes(x = comp_lv, y = avgPerformance), color = "#000000", linewidth = .6) + # red: "#ad1d00"
+  geom_vline(xintercept = max_index, linetype = "dashed", color = "black", linewidth = .4) 
 # SAVE
 print(line_plot)
-# ggsave(file.path(output.dir, paste0(which.stat, "_UHGG_draft_legend.pdf")), line_plot, width = 8, height = 8, units = "cm", dpi = 300)
+cat(file.path(output.dir, paste0(which.stat, "_OMD_draft_legend.pdf"))) # "_UHGG_draft_legend.pdf"
+# ggsave(file.path(output.dir, paste0(which.stat, "_OMD_draft_legend.pdf")), line_plot, width = 8, height = 8, units = "cm", dpi = 300) # "_UHGG_draft_legend.pdf"
 # _Ocean_7percFillvsISOFill.pdf
 
 ##################################
@@ -398,7 +406,8 @@ library(ggpubr)
 combined_plot <- ggarrange( lineplot_UHGG + labs(title = "a."), lineplot_ocean + labs(title = "b."),
     ncol = 2, nrow = 1) # , widths = c(2, 1.2))
 print(combined_plot)
-ggsave(file.path(output.dir, paste0(which.stat, "_UHGG_Ocean_draft.pdf")), combined_plot,  units = "cm", width = 12, height = 8, dpi = 300)
+cat(file.path(output.dir, paste0(which.stat, "_UHGG_Ocean_draft.pdf")))
+ggsave(file.path(output.dir, paste0(which.stat, "_UHGG_Ocean_draft.pdf")), combined_plot,  units = "cm", width = 13, height = 8, dpi = 300)
 ##################################
 
 
