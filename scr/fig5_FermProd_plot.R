@@ -73,7 +73,7 @@ calculate_performance_array <- function(true_values, predicted_values) {
 }
 
 # Arguments:
-output.dir                <- "/home/bioinfo/users/niber/prj_panModel/db/UHGG_v2.1_db/fermProdTest/out_7Feb_2024"
+output.dir                <- "./dat/fig/"
 gs.fermprod_pan <- read.table(file.path(output.dir, "panDraft_fermProd_31Gen.tsv"), header = TRUE, sep = "\t", quote = "")
 gs.fermprod <- read.table(file.path(output.dir, "mag_fermProd_6Feb.tsv"), header = TRUE, sep = "\t", quote = "")
 dim(gs.fermprod_pan)

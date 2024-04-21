@@ -92,7 +92,7 @@ compute_structural_QC <- function(iso.binary_table.list, rxnXmod_dir_path) {
 dist_type <- "binary"
 which.stat <- "f1_score" # fB_score f1_score recall precision accuracy FDR
 
-output.dir <- "dat/fig/"
+output.dir <- "./dat/fig/"
 
 # reference-GEMs file paths
 iso.binary.rxn.table_omd      <- "./dat/omd/rxnXmod/iso/allISO_rxnXmod.txt"       # OMD

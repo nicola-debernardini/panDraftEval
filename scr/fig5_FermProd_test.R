@@ -26,15 +26,14 @@ compute_confusion_matrix <- function(predicted, actual) {
   fp <- sum(predicted == 1 & actual == 0)
   tn <- sum(predicted == 0 & actual == 0)
   fn <- sum(predicted == 0 & actual == 1)
-  
   return(c(TP = tp, FP = fp, TN = tn, FN = fn))
 }
 
 # Arguments:
-output.dir                <- "./out"
+output.dir              <- "./out"
 fermentation_product_fn <- "./dat/uhgg/ferm_prod_test/fermentation_product_info.csv" # known fermentation products
-mag.gapfill.model.pathList        <- "./dat/uhgg/ferm_prod_test/MAG_GapfilledFT_listsPath.txt" # location of GEMs for the MAGs divided by SAG
-panMAG.CompLV.gapfill.model.path  <- "./dat/uhgg/ferm_prod_test/panFromMAG_GapfilledFT_Path.txt" # location of GEM for the species-level models
+mag.gapfill.model.pathList        <- "./dat/uhgg/ferm_prod_test/MAG_GapfilledFT_listsPath.txt" # location of GEMs for the MAGs divided by SGB
+panMAG.CompLV.gapfill.model.path  <- "./dat/uhgg/ferm_prod_test/panFromMAG_GapfilledFT_Path.txt" # location of pan-GEMs
 completeness.level.table          <- "./dat/uhgg/metadata/genomes-all_metadata.csv" # genomes metadat
 medium_fn <- "./dat/uhgg/ferm_prod_test/media/FT.csv" # growth medium
 
@@ -46,7 +45,7 @@ singleGeno_pathList <- readLines(mag.gapfill.model.pathList)
 # The simulations of anaerobic growth were all performed assuming the same growth medium ("FT.csv"). 
 # It comprised several organic compounds (i.e. carbohydrates, polyols, nucleotides, amino acids, organic acids) as potential energy sources
 medium <- fread(medium_fn)
-medium <- medium[!(name %in% c("O2")), ] # exclude the oxigen from the medium 
+medium <- medium[!(name %in% c("O2")), ] # exclude the oxigen from the medium
 
 # read metadata
 metadata <- read.table(completeness.level.table, sep = ",", header = TRUE, row.names = "Genome")
@@ -54,9 +53,7 @@ metadata$Species_name <- rownames(metadata)
 
 ### Load models
 uhgg_id_4_fermentation_test <- fermentation_product_binary$UHGG_id
-
-# ---------------
-### MAGs
+### MAGs ---------------
 # limit_mags_to <- 2 # compute the simulation for a limited number of GEMs per SGB
 prod.mets <- list()
 growth    <- list()
@@ -105,12 +102,10 @@ for(i in 1:length(growth)) {
 }
 gs.fermprod[, recon.method := "gapseq"]
 
-# SAVE
+# save
 fwrite(gs.fermprod, file = file.path(output.dir, "mag_fermProd.tsv"), sep = "\t", quote = FALSE)
 
-
-# ---------------
-### PAN-DRAFT
+### PAN-DRAFT ---------------
 panMAG.CompLV.gapfill.mods <- load_files_from_paths_for_RDS(panMAG.CompLV.gapfill.model.path, ".RDS") 
 
 prod.mets <- list()
@@ -157,5 +152,5 @@ for(i in 1:length(growth)) {
 }
 gs.fermprod_pan[, recon.method := "pan"]
 
-# SAVE
+# save
 fwrite(gs.fermprod_pan, file = file.path(output.dir, "panDraft_fermProd.tsv"), sep = "\t", quote = FALSE)

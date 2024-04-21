@@ -5,3 +5,4 @@ scr_04032024_backup/
 # Exclude pan-Draft with plotting options
 scr/pan-draft_plotting.R
 scr/pan-draft_withplottingOptions.R
+scr/fig5_FermProd_plot.R
