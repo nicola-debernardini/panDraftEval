@@ -1,3 +1,8 @@
+###################################################### @
+# Functions collection for plotting:
+# The version of pan-Draft in this folder provides some simple plotting options, however it will not be maintain.
+# This set of function support the script (pan-draft_withplottingOptions.R).
+
 # Weights distribution plot
 rxn.weights.dist.plot <- function(weights_plot_dt, dummy.weight, output.dir) {
     num.mod <- length(unique(weights_dt$model_id))

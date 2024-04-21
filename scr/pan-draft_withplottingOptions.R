@@ -1,3 +1,7 @@
+###################################################### @
+# pan-Draft version which provides some simple plotting options
+# This script will not be maintain in the future
+
 library(getopt)
 
 # get options first

@@ -6,7 +6,7 @@
 # Load R-packages
 suppressMessages(library(data.table)); setDTthreads(1)
 suppressMessages(library(ggplot2))
-suppressMessages(library(dplyr)) 
+suppressMessages(library(dplyr))
 library(RColorBrewer)
 library(ggpubr)
 
@@ -38,14 +38,14 @@ inIso_dt_list <- load_files_from_paths(iso.binary.rxn.table, ".tsv")
 inMAG_dt_list <- load_files_from_paths(mag.binary.rxn.table, ".tsv")
 
 # -------------
-# Compute statistics: distance between GEMs to reference-genome models 
+# Compute statistics: distance between GEMs to reference-genome models
 all_dist_df <- data.frame(mod_id = character(), ref_mod_id = character(),  dist_tp = character(), mod_category = character(), value = numeric(0))
 for (mod in names(inIso_dt_list)) {
     cat(paste(mod,"\n"))
     inIso_dt <- inIso_dt_list[[mod]]
     inMAG_dt <- inMAG_dt_list[[mod]]
 
-    # Calculate frequency of rxn in all the reference genomes 
+    # Calculate frequency of rxn in all the reference genomes
     Isolate_cols <- names(inIso_dt)[names(inIso_dt)!="rxn"]
     freq_ref_rxn <- inIso_dt %>%
     select(all_of(Isolate_cols)) %>%
@@ -126,9 +126,6 @@ plot_dt <- metadata %>%
 
 cat(paste0("The number of species with at least 30 MAG, no reference genome and a best-MAG completeness level < 90 is: ",sum(plot_dt$bestMAG_Comp < 90),"/",dim(plot_dt)[1], "\n"))
 
-# Read non-redundant genome sequence metadata
-
-
 # Calculate how many SGB have few or no Ref and a high number of MAGs
 metadata_REF_taxon <- metadata %>%
     filter(Species_name==Species_rep) %>%
@@ -178,7 +175,6 @@ plot_df_UHGG <- plot_df
 phylum_in_plot_uhgg <- unique(plot_dt_UHGG$phylum_color_noStat)
 
 # -------------
-# prepare dataset for the second plot:
 # relationship between completeness level of genome and quality of GEMs
 single_metric_plot_df <- plot_df_UHGG[plot_df_UHGG$dist_tp==which.stat,] # extract the values of the desired metric
 # single_metric_plot_df$phylum_color <- paste0(single_metric_plot_df$phylum_color, " (m=", single_metric_plot_df$count_MAGxphylum_count, "; s=", single_metric_plot_df$count_SpXphylum, ")")
@@ -202,8 +198,8 @@ inMAG_dt_list <- load_files_from_paths(mag.binary.rxn.table, ".tsv")
 # Input metadata
 oceans_metadata <- read.table(oceans_metadata_fn, sep = ",", header = TRUE, dec = ".")
 oceans_metadata <- oceans_metadata %>%  # distinguish genomes base on annotation (MAGs, reference genome and SAGs)
-  mutate(Genome_type = if_else(grepl("_METAG_", Genome), "MAG", 
-                        if_else(grepl("_REFG_", Genome), "REF", 
+  mutate(Genome_type = if_else(grepl("_METAG_", Genome), "MAG",
+                        if_else(grepl("_REFG_", Genome), "REF",
                         if_else(grepl("_SAGS_", Genome), "SAG", "")))
         )
 oceans_metadata <- oceans_metadata %>% # specify the sample name
@@ -348,7 +344,6 @@ p <- ggplot(plot_dt_UHGG, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_color)
     ) +
     scale_color_manual(values = set1_palette) +
     ylim(75, 100)
-p
 # ggsave(file.path(output.dir, "BestCompletenessMAG_x_Sp_noIsolates.pdf"), p, width = 6, height = 6, units = "in", dpi = 300)
 
 
@@ -371,7 +366,6 @@ sum_plot <- ggplot(single_metric_plot_df, aes(x=Completeness, y=value, color=phy
     legend.position =  c(.8, 0.3),
     legend.text = element_text(size = 6)) +
     scale_color_manual(values = set1_palette)
-sum_plot
 # ggsave(file.path(output.dir, paste0(which.stat,"_MAGsCLv.vs.GEMsQ.pdf")), sum_plot, width = 10, height = 8, units = "in", dpi = 300)
 
 
@@ -396,7 +390,6 @@ p_ocean <- ggplot(plot_dt_OMD, aes(x = n_MAG, y = bestMAG_Comp, color = phylum_c
     ) + 
     scale_color_manual(values = set1_palette) +
     ylim(60, 100)
-p_ocean
 # ggsave(file.path(output.dir, "BestCompletenessMAG_x_Sp_noIsolates.pdf"), p_ocean, width = 6, height = 6, units = "in", dpi = 300)
 
 

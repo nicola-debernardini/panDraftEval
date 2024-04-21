@@ -1,3 +1,7 @@
 # Exclude the data folder
 data/
+# Exclude script backup
 scr_04032024_backup/
+# Exclude pan-Draft with plotting options
+scr/pan-draft_plotting.R
+scr/pan-draft_withplottingOptions.R
