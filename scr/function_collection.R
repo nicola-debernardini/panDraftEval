@@ -184,3 +184,52 @@ refine_GTDBtaxonomy <- function(df) {
         mutate(species = sapply(strsplit(df[["species"]], "__"), function(x) x[2])) %>%
         return(df)
 }
+
+### Add annotation column to model attributes if not already there
+add_annotation_column_to_attributes <- function(mod.orig) {
+    if(!("annotation" %in% colnames(mod.orig@mod_attr))) {
+    bm_ind <- which(mod.orig@react_id == "bio1")
+    annostr <- ""
+    if(grepl("Bacteria",mod.orig@react_name[bm_ind]))
+        annostr <- "tax_domain:Bacteria"
+    if(grepl("Archaea",mod.orig@react_name[bm_ind]))
+        annostr <- "tax_domain:Archaea"
+    
+    mod.orig@mod_attr <- cbind(mod.orig@mod_attr,
+                                data.frame(annotation = annostr))
+    }
+    return(mod.orig)
+}
+
+# Build the data.table of presence/absence reaction in a list of models
+# input: 
+#       1) model_list: list of models
+# return: rxn2mod_dt
+build_rxn2mod_dt <- function(model_list) {
+  # Iterate over the rxn in each model to obtain a pre-dataset: list of lists of rxn
+  rxn_List <- list()
+  mod_List <- list()
+  mod_id2mod_dict <- list() # dictionary to save association between mod ID and mod
+  
+  for (mod in model_list) {
+    setattr(mod_id2mod_dict, mod@mod_id, mod) # set dict key-value
+    
+    # RXN list
+    rxn_List <- c(rxn_List, mod@react_id)
+    mod_idXreact_num <- c(mod@mod_id, rep(mod@mod_id,length(mod@react_id)-1)) 
+    mod_List <- c(mod_List, mod_idXreact_num) 
+  }
+  
+  rxn2mod_List <- list(rxn = rxn_List,
+                       mod_id = mod_List)
+  
+  # RXN: Convert the list to a data.table
+  dt <- data.table::copy(rxn2mod_List) 
+  setDT(dt)
+  
+  dt[, presence := 1] # Add a column indicating the presence
+  dt[, c("rxn", "mod_id") := lapply(.SD, as.character), .SDcols = c("rxn", "mod_id")] # Convert the columns to character
+  rxn2mod_dt <- dcast(dt, rxn ~ mod_id, fun.aggregate = length, fill = 0) # Reshape the data.table
+  
+  return(list(rxn2mod_dt, mod_id2mod_dict))
+}
